@@ -15,7 +15,7 @@ export const AppHeader = () => {
   };
 
   return (
-    <header className="flex h-14 sticky w-full top-0 shrink-0 justify-between items-center gap-2 border-b px-4 bg-background">
+    <header className="flex h-14 sticky z-20 w-full top-0 shrink-0 justify-between items-center gap-2 border-b px-4 bg-background">
       <SidebarTrigger />
       <Button onClick={handleLogout} variant="ghost" size="icon">
         <LogOutIcon />

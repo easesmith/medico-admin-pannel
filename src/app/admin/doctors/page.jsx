@@ -127,7 +127,7 @@ const Doctors = () => {
               ))}
           </TableBody>
         </Table>
-        {doctors?.length === 0 && !isLoading && <DataNotFound name="Doctor" />}
+        {doctors?.length === 0 && !isLoading && <DataNotFound name="Doctors" />}
       </div>
       <PaginationComp
         page={page}

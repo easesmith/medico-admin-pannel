@@ -6,7 +6,7 @@ const Layout = ({ children }) => {
   return (
     <SidebarProvider>
       <AppSidebar />
-      <SidebarInset className="bg-accent/90">
+      <SidebarInset className="bg-[#F6F7F8]">
         <AppHeader />
         <main className="px-10 py-5 ">{children}</main>
       </SidebarInset>

@@ -12,6 +12,7 @@ import {
   StarIcon,
   StethoscopeIcon,
   UserCheckIcon,
+  UsersIcon,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -46,6 +47,11 @@ const menuItems = [
         title: "Doctors",
         icon: StethoscopeIcon,
         url: "/admin/doctors",
+      },
+      {
+        title: "Patients",
+        icon: UsersIcon,
+        url: "/admin/patients",
       },
     ],
   },
