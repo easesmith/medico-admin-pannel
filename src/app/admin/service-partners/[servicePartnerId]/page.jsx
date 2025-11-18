@@ -1,29 +1,30 @@
 "use client";
 
 import { DoctorDetails } from "@/components/doctor/doctor-details";
+import { ServicePartnerDetails } from "@/components/service-partner/service-partner-details";
 import { BackLink } from "@/components/shared/back-link";
 import { H1 } from "@/components/typography";
 import { useApiQuery } from "@/hooks/useApiQuery";
 import { useParams } from "next/navigation";
 
-const DoctorDetailsPage = () => {
+const ServicePartnerPage = () => {
   const params = useParams();
 
   const { data, isLoading, error } = useApiQuery({
-    url: `/admin/doctors/${params.doctorId}`,
-    queryKeys: ["doctors"],
+    url: `/admin/doctors/${params.servicePartnerId}`,
+    queryKeys: ["service-partners"],
   });
 
   console.log("data", data);
 
   return (
     <div>
-      <BackLink href="/admin/doctors">
-        <H1>Doctor Details</H1>
+      <BackLink href="/admin/service-partners">
+        <H1>Service Partner Details</H1>
       </BackLink>
-      <DoctorDetails doctor={data?.data?.doctor || ""} />
+      <ServicePartnerDetails doctor={data?.data?.doctor || ""} />
     </div>
   );
 };
 
-export default DoctorDetailsPage;
+export default ServicePartnerPage;

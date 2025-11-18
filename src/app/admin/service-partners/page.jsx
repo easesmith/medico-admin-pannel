@@ -1,6 +1,7 @@
 "use client";
 
 import { Doctor } from "@/components/doctor/doctor";
+import { ServicePartner } from "@/components/service-partner/service-partner";
 import DataNotFound from "@/components/shared/DataNotFound";
 import { PaginationComp } from "@/components/shared/PaginationComp";
 import { H1 } from "@/components/typography";
@@ -41,14 +42,13 @@ const Doctors = () => {
 
   const handleReset = () => {
     setStatus("all");
-    setSearchQuery("");
   };
 
   const { data, isLoading, error } = useApiQuery({
     url: `/admin/doctors?status=${
       status === "all" ? "" : status
     }&page=${page}&limit=${limit}&search=${searchQuery}`,
-    queryKeys: ["doctors", status, page, searchQuery, limit],
+    queryKeys: ["service-partners", status, page, searchQuery, limit],
   });
 
   console.log("data", data);
@@ -63,13 +63,13 @@ const Doctors = () => {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center gap-4">
-        <H1>Doctors</H1>
-        <Button asChild variant="medico">
+        <H1>Service Partners</H1>
+        {/* <Button asChild variant="medico">
           <Link href="/admin/doctors/add">
             <PlusIcon />
             <span>Add Doctor</span>
           </Link>
-        </Button>
+        </Button> */}
       </div>
 
       <div className="flex flex-col md:flex-row justify-between gap-4">
@@ -137,15 +137,17 @@ const Doctors = () => {
           </TableHeader>
           <TableBody>
             {doctors.map((doctor) => (
-              <Doctor key={doctor._id || doctor.id} doctor={doctor} />
+              <ServicePartner key={doctor._id || doctor.id} doctor={doctor} />
             ))}
             {isLoading &&
               Array.from({ length: 5 }).map((_, index) => (
-                <Doctor.Skeleton key={index} />
+                <ServicePartner.Skeleton key={index} />
               ))}
           </TableBody>
         </Table>
-        {doctors?.length === 0 && !isLoading && <DataNotFound name="Doctors" />}
+        {doctors?.length === 0 && !isLoading && (
+          <DataNotFound name="Service Partners" />
+        )}
       </div>
       <PaginationComp
         page={page}

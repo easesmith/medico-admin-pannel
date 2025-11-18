@@ -14,8 +14,8 @@ import {
   Stethoscope,
 } from "lucide-react";
 
-export const DoctorDetails = ({ doctor }) => {
-  if (!doctor) return <p>No doctor data found.</p>;
+export const ServicePartnerDetails = ({ doctor }) => {
+  if (!doctor) return <p>No Service Partner data found.</p>;
   const {address}= doctor;
 
   return (

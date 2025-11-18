@@ -1,6 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Hospital } from "@/components/hospital/hospital";
+import { ExportPatientsModal } from "@/components/patient/export-modal";
+import { Patient } from "@/components/patient/patient";
+import DataNotFound from "@/components/shared/DataNotFound";
+import { PaginationComp } from "@/components/shared/PaginationComp";
+import { H1 } from "@/components/typography";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -13,42 +18,68 @@ import {
 import {
   Table,
   TableBody,
-  TableCell,
   TableHead,
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
-import {
-  Search,
-  Plus,
-  ChevronLeft,
-  ChevronRight,
-  RotateCcwIcon,
-  FileOutputIcon,
-} from "lucide-react";
-import { H1 } from "@/components/typography";
-import Link from "next/link";
-import { useApiQuery } from "@/hooks/useApiQuery";
-import { Patient } from "@/components/patient/patient";
-import DataNotFound from "@/components/shared/DataNotFound";
-import { PaginationComp } from "@/components/shared/PaginationComp";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { ExportPatientsModal } from "@/components/patient/export-modal";
+import { useApiQuery } from "@/hooks/useApiQuery";
+import { RotateCcwIcon, Search } from "lucide-react";
+import { useEffect, useState } from "react";
 
-const PatientsPage = () => {
+const hospitalsData = [
+  {
+    clinicName: "Bright Smile Dental",
+    clinicReceptionNumber: "9876543210",
+    clinicConsultationFees: "500",
+    numberOfDentalChairs: "3",
+    clinicOwnership: "Dr. Mehta",
+    propertyOwnership: "Owned",
+    selectedHolidays: [{ day: "Sunday" }],
+    address: "A-12 MG Road",
+    area: "Andheri West",
+    nearbyLandmark: "Infinity Mall",
+    pincode: "400053",
+    city: "Mumbai",
+    state: "Maharashtra",
+    longitude: "72.834",
+    latitude: "19.119",
+    defaultClinic: true,
+    status: "active",
+  },
+  {
+    clinicName: "ToothCare Clinic",
+    clinicReceptionNumber: "9123456789",
+    clinicConsultationFees: "400",
+    numberOfDentalChairs: "2",
+    clinicOwnership: "Dr. Patel",
+    propertyOwnership: "Rented",
+    selectedHolidays: [{ day: "Monday" }],
+    address: "23/4 Park Street",
+    area: "Salt Lake",
+    nearbyLandmark: "City Centre Mall",
+    pincode: "700064",
+    city: "Kolkata",
+    state: "West Bengal",
+    longitude: "88.394",
+    latitude: "22.572",
+    defaultClinic: false,
+    status: "inactive",
+  },
+];
+
+const HospitalPage = () => {
   const [gender, setGender] = useState("all");
   const [bloodGroup, setBloodGroup] = useState("all");
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
   const [page, setPage] = useState(1);
   const [pageCount, setPageCount] = useState(0);
-  const [patients, setPatients] = useState([]);
+  const [hospitals, setHospitals] = useState([...hospitalsData]);
   const [limit, setLimit] = useState(10);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -76,16 +107,16 @@ const PatientsPage = () => {
 
   console.log("data", data);
 
-  useEffect(() => {
-    if (data) {
-      setPatients(data?.data?.patients || []);
-      setPageCount(data?.totalPages || 0);
-    }
-  }, [data]);
+  // useEffect(() => {
+  //   if (data) {
+  //     setPatients(data?.data?.patients || []);
+  //     setPageCount(data?.totalPages || 0);
+  //   }
+  // }, [data]);
 
   return (
     <div className="space-y-6">
-      <H1>Patients</H1>
+      <H1>Hospitals</H1>
 
       {/* Filters */}
       <div className="flex justify-between items-end gap-4 flex-wrap">
@@ -106,42 +137,6 @@ const PatientsPage = () => {
         </div>
 
         <div className="flex gap-4 items-end flex-wrap">
-          <div>
-            <label className="text-sm font-medium mb-1 block">Gender</label>
-            <Select value={gender} onValueChange={setGender}>
-              <SelectTrigger className="w-32">
-                <SelectValue placeholder="All" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All</SelectItem>
-                <SelectItem value="female">Female</SelectItem>
-                <SelectItem value="male">Male</SelectItem>
-                <SelectItem value="other">Other</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div>
-            <label className="text-sm font-medium mb-1 block">
-              Blood Group
-            </label>
-            <Select value={bloodGroup} onValueChange={setBloodGroup}>
-              <SelectTrigger className="w-32">
-                <SelectValue placeholder="All" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All</SelectItem>
-                <SelectItem value="A+">A+</SelectItem>
-                <SelectItem value="A-">A-</SelectItem>
-                <SelectItem value="O-">O-</SelectItem>
-                <SelectItem value="O+">O+</SelectItem>
-                <SelectItem value="B+">B+</SelectItem>
-                <SelectItem value="B-">B-</SelectItem>
-                <SelectItem value="AB-">AB-</SelectItem>
-                <SelectItem value="AB+">AB+</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
           <div>
             <label className="text-sm font-medium mb-1 block">Status</label>
             <Select value={status} onValueChange={setStatus}>
@@ -167,7 +162,7 @@ const PatientsPage = () => {
             </TooltipContent>
           </Tooltip>
 
-          <Tooltip>
+          {/* <Tooltip>
             <TooltipTrigger asChild>
               <Button variant="medico" onClick={handleExort}>
                 <FileOutputIcon />
@@ -176,7 +171,7 @@ const PatientsPage = () => {
             <TooltipContent>
               <p>Export Data</p>
             </TooltipContent>
-          </Tooltip>
+          </Tooltip> */}
         </div>
       </div>
 
@@ -185,30 +180,30 @@ const PatientsPage = () => {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Profile</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Phone</TableHead>
-              <TableHead>Gender</TableHead>
-              <TableHead>Blood Group</TableHead>
+              <TableHead>Clinic</TableHead>
+              <TableHead>Contact</TableHead>
+              <TableHead>Fees</TableHead>
+              <TableHead>Ownership</TableHead>
+              <TableHead>Property</TableHead>
+              <TableHead>Address</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Created At</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {patients.map((patient, index) => (
-              <Patient key={patients._id || index} patient={patient} />
+            {hospitals.map((hospital, index) => (
+              <Hospital key={hospital?._id || index} hospital={hospital} />
             ))}
 
             {isLoading &&
               Array.from({ length: 5 }).map((_, index) => (
-                <Patient.Skeleton key={index} />
+                <Hospital.Skeleton key={index} />
               ))}
           </TableBody>
         </Table>
 
-        {patients?.length === 0 && !isLoading && (
-          <DataNotFound name="Patients" />
+        {hospitals?.length === 0 && !isLoading && (
+          <DataNotFound name="Hospitals" />
         )}
       </div>
 
@@ -229,4 +224,4 @@ const PatientsPage = () => {
   );
 };
 
-export default PatientsPage;
+export default HospitalPage;
