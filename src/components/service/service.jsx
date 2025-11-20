@@ -80,11 +80,13 @@ export const Service = ({ service }) => {
       </TableCell>
       <TableCell>
         <div className="flex gap-2 flex-wrap">
-          {service.cities.map((c) => (
-            <Badge className="capitalize" variant="secondary" key={c._id}>
-              {c.name}
-            </Badge>
-          ))}
+          {service.cities.length > 0
+            ? service.cities.map((c) => (
+                <Badge className="capitalize" variant="secondary" key={c._id}>
+                  {c.name}
+                </Badge>
+              ))
+            : "NA"}
         </div>
       </TableCell>
       <TableCell>
