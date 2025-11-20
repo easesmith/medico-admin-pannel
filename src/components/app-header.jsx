@@ -29,8 +29,10 @@ export const AppHeader = () => {
   };
 
   useEffect(() => {
-    if (data) {
-      setIsAlertModalOpen(false)
+    console.log("data", data);
+    if (data.success) {
+
+      setIsAlertModalOpen(false);
       router.push("/"); // redirect to login page
     }
   }, [data]);
