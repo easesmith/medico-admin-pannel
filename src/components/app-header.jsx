@@ -33,7 +33,8 @@ export const AppHeader = () => {
     if (data?.success) {
 
       setIsAlertModalOpen(false);
-      router.push("/"); // redirect to login page
+      router.refresh(); // redirect to login page
+      // window.location.reload()
     }
   }, [data]);
 
