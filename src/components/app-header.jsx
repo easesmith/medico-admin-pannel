@@ -30,7 +30,7 @@ export const AppHeader = () => {
 
   useEffect(() => {
     console.log("data", data);
-    if (data.success) {
+    if (data?.success) {
 
       setIsAlertModalOpen(false);
       router.push("/"); // redirect to login page
