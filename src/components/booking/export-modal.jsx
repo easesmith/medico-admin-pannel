@@ -147,7 +147,7 @@ export const ExportAppointmentModal = ({ isModalOpen, setIsModalOpen }) => {
               </Button>
 
               {url && (
-                <a href={url} download={`bookings.${format}`}>
+                <a href={url} download={`APPOINTMENTS.${format}`}>
                   <Button type="button" variant="secondary">
                     Download {format.toUpperCase()}
                   </Button>
