@@ -29,7 +29,8 @@ import {
 } from "@/components/ui/tooltip";
 import { useApiQuery } from "@/hooks/useApiQuery";
 import { buildQuery } from "@/lib/utils";
-import { FileOutputIcon, RotateCcwIcon, Search } from "lucide-react";
+import { FileOutputIcon, PlusIcon, RotateCcwIcon, Search } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 
 const Appointments = () => {
@@ -134,7 +135,7 @@ const Appointments = () => {
   useEffect(() => {
     if (data?.data) {
       setBookings(data.data);
-      // setPageCount(data?.pagination?.pages || 1);
+      setPageCount(data?.totalPages || 1);
     }
   }, [data]);
 
@@ -142,22 +143,30 @@ const Appointments = () => {
     <div className="space-y-6">
       <div className="flex justify-between gap-5">
         <H1>Appointments</H1>
-        <div className="flex gap-5 items-end">
-          <div>
-            <label htmlFor="search" className="text-sm font-medium mb-1 block">
-              Search
-            </label>
-            <div className="relative">
-              <Search className="absolute left-3 top-2.5 size-4  text-muted-foreground" />
-              <Input
-                id="search"
-                placeholder="Search by name, email, phone..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-9 w-lg bg-white"
-              />
-            </div>
+        <Button asChild variant="medico">
+          <Link href={"/admin/appointments/add"}>
+            <PlusIcon />
+            Add
+          </Link>
+        </Button>
+      </div>
+      <div className="flex justify-between gap-5">
+        <div>
+          <label htmlFor="search" className="text-sm font-medium mb-1 block">
+            Search
+          </label>
+          <div className="relative">
+            <Search className="absolute left-3 top-2.5 size-4  text-muted-foreground" />
+            <Input
+              id="search"
+              placeholder="Search by name, email, phone..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9 w-lg bg-white"
+            />
           </div>
+        </div>
+        <div className="flex gap-5 items-end">
           <Tooltip>
             <TooltipTrigger asChild>
               <Button variant="outline" onClick={handleReset}>
@@ -365,6 +374,8 @@ const Appointments = () => {
           <label className="text-sm font-medium mb-1 block">End Date</label>
           <DatePicker value={endDate} onChange={setEndDate} />
         </div>
+
+        {/* Limit */}
 
         <div>
           <label className="text-sm font-medium mb-1 block">Limit</label>

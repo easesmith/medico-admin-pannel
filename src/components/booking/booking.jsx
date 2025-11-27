@@ -15,6 +15,11 @@ export const Booking = ({ booking }) => {
   const onView = () => {
     router.push(`/admin/appointments/${booking?._id}`);
   };
+
+  const onEdit = () => {
+    router.push(`/admin/appointments/${booking?._id}/update`);
+  };
+
   return (
     <TableRow>
       <TableCell>
@@ -58,7 +63,7 @@ export const Booking = ({ booking }) => {
       <TableCell>{booking.category || "NA"}</TableCell>
 
       <TableCell className="text-right">
-        <Actions onView={onView} />
+        <Actions onView={onView} onEdit={onEdit} />
       </TableCell>
     </TableRow>
   );
@@ -67,7 +72,7 @@ export const Booking = ({ booking }) => {
 Booking.Skeleton = function BookingSkeleton() {
   return (
     <TableRow>
-      {Array.from({ length: 7 }).map((_, i) => (
+      {Array.from({ length: 9 }).map((_, i) => (
         <TableCell key={i}>
           <div className="h-4 w-full animate-pulse bg-muted rounded" />
         </TableCell>
