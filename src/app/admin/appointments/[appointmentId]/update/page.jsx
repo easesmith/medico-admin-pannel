@@ -50,8 +50,6 @@ const bookingSchema = z.object({
   notes: z.string().optional(),
   category: z.enum(["nursing", "consultation", "therapy", "other"]),
   modes: z.array(z.string()),
-
-  cityId: z.string().min(1),
 });
 
 // -------------------------------
@@ -76,7 +74,6 @@ const UpdateAppointment = () => {
       notes: "",
       category: "nursing",
       modes: [],
-      cityId: "",
     },
   });
 
@@ -117,7 +114,6 @@ const UpdateAppointment = () => {
         appointmentDate: appointmentDate && new Date(appointmentDate),
         startTime: slotTime?.startTime,
         endTime: slotTime?.endTime,
-        cityId: city,
         category,
         modes,
         notes,
@@ -388,6 +384,7 @@ const UpdateAppointment = () => {
                     <FormItem>
                       <FormLabel>Category</FormLabel>
                       <Select
+                        key={field.value}
                         value={field.value}
                         onValueChange={field.onChange}
                       >
@@ -404,41 +401,6 @@ const UpdateAppointment = () => {
                           <SelectItem value="equipment">Equipment</SelectItem>
                         </SelectContent>
                       </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {/* City ID */}
-                <FormField
-                  control={control}
-                  name="cityId"
-                  render={({ field }) => (
-                    <FormItem className="">
-                      <FormLabel>City</FormLabel>
-                      <FormControl>
-                        <Select
-                          disabled={isCityLoading}
-                          value={field.value}
-                          key={field.value}
-                          onValueChange={field.onChange}
-                        >
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Select City" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {cityData?.data?.map((c) => (
-                              <SelectItem key={c._id} value={c._id}>
-                                {c.name}
-                              </SelectItem>
-                            ))}
-                            {cityData && cityData.data.length === 0 && (
-                              <div disabled>No cities found</div>
-                            )}
-                            {/* <SelectItem value="all">All</SelectItem> */}
-                          </SelectContent>
-                        </Select>
-                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -520,9 +482,7 @@ const UpdateAppointment = () => {
                                 {/* Profile Photo */}
                                 <Avatar className="size-14">
                                   <AvatarImage
-                                    src={
-                                      partner?.documents?.profilePhoto
-                                    }
+                                    src={partner?.documents?.profilePhoto}
                                   />
                                   <AvatarFallback>
                                     {partner.firstName ?? "Partner"}
