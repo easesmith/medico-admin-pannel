@@ -50,10 +50,8 @@ export const City = ({ city }) => {
     await togglePatientStatus();
   };
 
-  console.log("error", error);
   useEffect(() => {
     if (error) {
-      
       setIsActive(city?.isActive);
     }
   }, [error]);

@@ -1,0 +1,45 @@
+import { XIcon } from "lucide-react";
+import { Button } from "../ui/button";
+import { useApiMutation } from "@/hooks/useApiMutation";
+import { DELETE } from "@/constants/apiMethods";
+import { useParams } from "next/navigation";
+import { Spinner } from "../ui/spinner";
+import { useEffect } from "react";
+
+export const Medication = ({ item }) => {
+  const params = useParams();
+
+  const {
+    mutateAsync,
+    isPending,
+    data: result,
+  } = useApiMutation({
+    url: `/admin/patient/${params.patientId}/medications?medication=${item}`,
+    method: DELETE,
+    invalidateKey: ["patients", params.patientId],
+  });
+
+  const removeMedication = async () => {
+    await mutateAsync();
+  };
+
+  useEffect(() => {
+    if (result) {
+      console.log("result", result);
+    }
+  }, [result]);
+  return (
+    <div className="border py-1 px-2 rounded-md flex gap-3 items-center">
+      <p className="text-base font-medium text-foreground">{item}</p>
+      <Button
+        onClick={removeMedication}
+        variant="destructive"
+        size="icon"
+        className="size-7 rounded-full"
+        disabled={isPending}
+      >
+        {isPending ? <Spinner /> : <XIcon />}
+      </Button>
+    </div>
+  );
+};

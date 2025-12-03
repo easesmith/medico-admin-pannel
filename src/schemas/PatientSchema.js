@@ -16,3 +16,7 @@ export const dateRangeSchema = z
     message: "End date must be after start date",
     path: ["endDate"], // attach error to endDate field
   });
+
+export const medicationSchema = z.object({
+  medication: z.string().min(1, { error: "Medication is required" }),
+});

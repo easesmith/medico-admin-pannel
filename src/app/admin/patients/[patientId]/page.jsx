@@ -20,9 +20,15 @@ import PatientDetailsSkeleton from "@/components/patient/patient-details-skeleto
 import { format } from "date-fns/format";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Info } from "@/components/shared/info";
+import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import { AddMedication } from "@/components/patient/add-medication";
+import { Medication } from "@/components/patient/medication";
+import Link from "next/link";
 
 const PatientDetailsPage = () => {
   const params = useParams();
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const { data, isLoading } = useApiQuery({
     url: `/admin/patients/${params.patientId}`,
@@ -30,6 +36,7 @@ const PatientDetailsPage = () => {
   });
 
   const patient = data?.data?.patient;
+  console.log("patient data", data);
 
   if (isLoading) return <PatientDetailsSkeleton />;
 
@@ -59,6 +66,11 @@ const PatientDetailsPage = () => {
             {patient.isActive ? "Active" : "Inactive"}
           </Badge>
         </div>
+        <Button variant="medico" asChild>
+          <Link href={`/admin/patients/${params.patientId}/bookings`}>
+            View Treatment History
+          </Link>
+        </Button>
       </div>
 
       {/* Personal Information */}
@@ -120,9 +132,12 @@ const PatientDetailsPage = () => {
 
       {/* Medical Information */}
       <Card>
-        <CardHeader className="flex flex-row items-center gap-2 border-b pb-3">
-          <HeartPulse className="h-5 w-5 text-primary" />
-          <h2 className="text-lg font-semibold">Medical Information</h2>
+        <CardHeader className="flex flex-row items-center justify-between gap-2 border-b pb-3">
+          <div className="flex flex-row items-center gap-2">
+            <HeartPulse className="h-5 w-5 text-primary" />
+            <h2 className="text-lg font-semibold">Medical Information</h2>
+          </div>
+          <Button onClick={() => setIsModalOpen(true)}>Add Medication</Button>
         </CardHeader>
         <CardContent className="space-y-6 pt-6">
           <Info
@@ -134,14 +149,16 @@ const PatientDetailsPage = () => {
             }
           />
           <Separator />
-          <Info
-            label="Current Medications"
-            value={
-              patient.currentMedications?.length
-                ? patient.currentMedications.join(", ")
-                : "No medications listed"
-            }
-          />
+          <div className="flex flex-col gap-1">
+            <p className="text-sm text-muted-foreground">Current Medications</p>
+            <div className="flex gap-4 items-center flex-wrap">
+              {patient.currentMedications?.length
+                ? patient.currentMedications.map((item, index) => (
+                    <Medication key={index} item={item} />
+                  ))
+                : "No medications listed"}
+            </div>
+          </div>
           <Separator />
           <div className="space-y-4">
             <h3 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
@@ -210,6 +227,13 @@ const PatientDetailsPage = () => {
             format(new Date(patient.updatedAt), "dd MMM, yyyy")}
         </p>
       </div>
+
+      {isModalOpen && (
+        <AddMedication
+          isModalOpen={isModalOpen}
+          setIsModalOpen={setIsModalOpen}
+        />
+      )}
     </div>
   );
 };
