@@ -13,16 +13,22 @@ import { appointmentStatusColors } from "@/constants/status";
 import { useApiMutation } from "@/hooks/useApiMutation";
 import { useApiQuery } from "@/hooks/useApiQuery";
 import { cn } from "@/lib/utils";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 const BookingDetails = () => {
   const params = useParams();
+   const router = useRouter();
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleBookingStatus = async () => {
     setIsModalOpen(true);
   };
+
+  const onEdit = () => {
+    router.push(`/admin/appointments/${params.appointmentId}/update`);
+  };
+
 
   const { data, isLoading, error } = useApiQuery({
     url: `/booking/bookings/${params.appointmentId}`,
@@ -73,11 +79,19 @@ const BookingDetails = () => {
 
         <div className="flex justify-between gap-4">
           <BackLink href="/admin/appointments" />
-          {status !== "Cancelled" && status !== "Rejected" && (
-            <Button onClick={handleBookingStatus} variant="medico">
-              Update Booking Status
-            </Button>
-          )}
+          <div className="flex gap-5 items-center">
+            {status !== "Cancelled" && status !== "Rejected" && (
+              <Button onClick={handleBookingStatus} variant="medico">
+                Update Booking Status
+              </Button>
+            )}
+
+            {status !== "Cancelled" && status !== "Rejected" && (
+              <Button onClick={onEdit} variant="outline">
+                Update Booking
+              </Button>
+            )}
+          </div>
         </div>
 
         {/* Header */}
@@ -140,7 +154,10 @@ const BookingDetails = () => {
           <CardContent className="grid grid-cols-2 gap-4">
             <Info
               label="Date"
-              value={ appointmentDate && new Date(appointmentDate).toLocaleDateString()}
+              value={
+                appointmentDate &&
+                new Date(appointmentDate).toLocaleDateString()
+              }
             />
             <Info
               label="Slot"

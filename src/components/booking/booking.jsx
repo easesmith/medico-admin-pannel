@@ -30,18 +30,20 @@ export const Booking = ({ booking }) => {
       <TableCell>{booking.service?.name || "NA"}</TableCell>
 
       <TableCell>
-        {booking.appointmentDate && new Date(booking.appointmentDate).toLocaleDateString("en-IN", {
-          day: "2-digit",
-          month: "short",
-          year: "numeric",
-        })}
+        {booking.appointmentDate &&
+          new Date(booking.appointmentDate).toLocaleDateString("en-IN", {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+          })}
       </TableCell>
       <TableCell>
-        {booking.createdAt && new Date(booking.createdAt).toLocaleDateString("en-IN", {
-          day: "2-digit",
-          month: "short",
-          year: "numeric",
-        })}
+        {booking.createdAt &&
+          new Date(booking.createdAt).toLocaleDateString("en-IN", {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+          })}
       </TableCell>
 
       <TableCell>
@@ -63,7 +65,14 @@ export const Booking = ({ booking }) => {
       <TableCell>{booking.category || "NA"}</TableCell>
 
       <TableCell className="text-right">
-        <Actions onView={onView} onEdit={onEdit} />
+        <Actions
+          onView={onView}
+          onEdit={
+            booking?.status === "Cancelled" || booking?.status === "Rejected"
+              ? null
+              : onEdit
+          }
+        />
       </TableCell>
     </TableRow>
   );

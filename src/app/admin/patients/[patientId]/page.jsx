@@ -13,6 +13,7 @@ import {
   Clock,
   Pill,
   History,
+  PlusIcon,
 } from "lucide-react";
 import { useParams } from "next/navigation";
 import { useApiQuery } from "@/hooks/useApiQuery";
@@ -66,11 +67,19 @@ const PatientDetailsPage = () => {
             {patient.isActive ? "Active" : "Inactive"}
           </Badge>
         </div>
-        <Button variant="medico" asChild>
+        <div className="flex gap-5 items-center">
+        <Button variant="outline" asChild>
           <Link href={`/admin/patients/${params.patientId}/bookings`}>
             View Treatment History
           </Link>
         </Button>
+          <Button asChild variant="medico">
+            <Link href={`/admin/patients/${params.patientId}/bookings/add`}>
+              <PlusIcon />
+              Add Appointment
+            </Link>
+          </Button>
+        </div>
       </div>
 
       {/* Personal Information */}
@@ -137,6 +146,7 @@ const PatientDetailsPage = () => {
             <HeartPulse className="h-5 w-5 text-primary" />
             <h2 className="text-lg font-semibold">Medical Information</h2>
           </div>
+
           <Button onClick={() => setIsModalOpen(true)}>Add Medication</Button>
         </CardHeader>
         <CardContent className="space-y-6 pt-6">

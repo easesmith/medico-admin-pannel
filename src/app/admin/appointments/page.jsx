@@ -122,7 +122,7 @@ const Appointments = () => {
 
   const { data: partnerData, isLoading: isPartnerLoading } = useApiQuery({
     url: `/admin/service-providers/names`,
-    queryKeys: ["service-provider-admin"],
+    queryKeys: ["service-provider"],
   });
 
   const { data: cityData, isLoading: isCityLoading } = useApiQuery({
@@ -146,7 +146,7 @@ const Appointments = () => {
         <Button asChild variant="medico">
           <Link href={"/admin/appointments/add"}>
             <PlusIcon />
-            Add
+            Add Appointment
           </Link>
         </Button>
       </div>

@@ -11,7 +11,13 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 
-export function PaginationComp({ pageCount, page, setPage, className }) {
+export function PaginationComp({
+  pageCount,
+  page,
+  setPage,
+  className,
+  show = true,
+}) {
   const totalPageCount = pageCount;
 
   const renderPageNumbers = () => {
@@ -102,8 +108,8 @@ export function PaginationComp({ pageCount, page, setPage, className }) {
     setPage((prev) => prev + 1);
   };
 
-  if(pageCount === 0){
-    return null
+  if (pageCount === 0) {
+    return null;
   }
 
   return (
@@ -122,7 +128,20 @@ export function PaginationComp({ pageCount, page, setPage, className }) {
               to=""
             />
           </PaginationItem>
-          {renderPageNumbers()}
+
+          {show ? (
+            renderPageNumbers()
+          ) : (
+            <PaginationItem className="cursor-pointer">
+              <PaginationLink
+                className={cn(
+                  "border border-input! size-10 rounded-full text-white hover:text-white bg-main! hover:bg-main"
+                )}
+              >
+                {page}
+              </PaginationLink>
+            </PaginationItem>
+          )}
           <PaginationItem className="cursor-pointer">
             <PaginationNext
               onClick={handleNext}
@@ -132,6 +151,14 @@ export function PaginationComp({ pageCount, page, setPage, className }) {
           </PaginationItem>
         </PaginationContent>
       </Pagination>
+      {show && (
+        <span className="text-gray-600 text-sm whitespace-nowrap">
+          Total Pages: {pageCount || 1}
+        </span>
+      )}
+      {/* <span className="text-gray-600 text-sm whitespace-nowrap">
+        Page {page} of {pageCount || 1}
+      </span> */}
     </div>
   );
 }

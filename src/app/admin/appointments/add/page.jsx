@@ -30,11 +30,13 @@ import { Spinner } from "@/components/ui/spinner";
 import { POST } from "@/constants/apiMethods";
 import { useApiMutation } from "@/hooks/useApiMutation";
 import { useApiQuery } from "@/hooks/useApiQuery";
-import { generateTimeRange } from "@/lib/utils";
+import { buildQuery, generateTimeRange } from "@/lib/utils";
 import { format } from "date-fns/format";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { CustomCombobox } from "@/components/shared/custom-combobox";
 
 // -------------------------------
 // ZOD SCHEMA
@@ -42,23 +44,68 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 const bookingSchema = z.object({
   serviceId: z.string().min(1, "Required"),
   patientId: z.string().min(1, "Required"),
+  cityId: z.string().optional(),
   appointmentDate: z.date().min(1, "Required"),
   startTime: z.string().min(1, "Required"),
-  endTime: z.string().min(1, "Required"),
+  endTime: z.string().optional(),
   //   duration: z.coerce.number().min(1),
-  servicePartnerId: z.string().min(1, "Required"),
+  servicePartnerId: z.string().optional(),
   notes: z.string().optional(),
   category: z.enum(["nursing", "consultation", "therapy", "other"]),
-  modes: z.array(z.string()),
+  modes: z.string(),
+  addressId: z
+    .string({
+      required_error: "Select an address",
+    })
+    .min(1, "Select an address"),
 });
+
+const addressList = [
+  {
+    _id: "675df82c",
+    street: "MG Road",
+    city: "Bengaluru",
+    state: "Karnataka",
+    country: "India",
+    pincode: "560001",
+    isDefault: true,
+  },
+  {
+    _id: "675df8de",
+    street: "Park Street",
+    city: "Kolkata",
+    state: "West Bengal",
+    country: "India",
+    pincode: "700016",
+  },
+];
 
 // -------------------------------
 // COMPONENT
 // -------------------------------
 const AddAppointment = () => {
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState("10");
+  const [pageCount, setPageCount] = useState(10);
+  const [search, setSearch] = useState("");
+
+  const [patients, setPatients] = useState([]);
+  const [isAddressLoading, setIsAddressLoading] = useState(true);
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      setIsAddressLoading(false);
+    }, 2000);
+
+    return () => {
+      clearTimeout(timeout);
+    };
+  }, []);
   const router = useRouter();
   const [timeOptions, setTimeOptions] = useState([]);
 
+  console.log("search", search);
+  console.log("patients", patients);
   const form = useForm({
     resolver: zodResolver(bookingSchema),
     defaultValues: {
@@ -71,13 +118,14 @@ const AddAppointment = () => {
       servicePartnerId: "",
       notes: "",
       category: "nursing",
-      modes: [],
+      modes: "",
     },
   });
 
   const { control, handleSubmit, watch } = form;
 
   const serviceId = watch("serviceId");
+  const cityId = watch("cityId");
 
   const { data: serviceData, isLoading: isServiceLoading } = useApiQuery({
     url: `/admin/services/names`,
@@ -96,20 +144,53 @@ const AddAppointment = () => {
     setTimeOptions(timeOptions);
   };
 
-  const { data: patientData, isLoading: isPatientLoading } = useApiQuery({
-    url: `/admin/patients/names`,
-    queryKeys: ["patient-admin"],
+  const paitentQuery = buildQuery({
+    isActive: true,
+    page,
+    searchQuery: search,
   });
+  const { data: patientData, isLoading: isPatientLoading } = useApiQuery({
+    url: `/admin/patients/names?${paitentQuery}`,
+    queryKeys: ["patients", page, search],
+  });
+
+  console.log("patientData", patientData);
+
+  useEffect(() => {
+    if (patientData) {
+      const modifiedPatients = patientData?.data?.map((item) => ({
+        value: item._id,
+        label: item.firstName,
+      }));
+      setPatients(modifiedPatients);
+    }
+  }, [patientData]);
 
   const { data: cityData, isLoading: isCityLoading } = useApiQuery({
     url: `/city/getAllCities`,
     queryKeys: ["city"],
   });
 
-  const { data: partnerData, isLoading: isPartnerLoading } = useApiQuery({
-    url: `/admin/service-providers/names`,
-    queryKeys: ["service-provider-admin"],
+  const query = buildQuery({
+    serviceId,
+    cityId,
   });
+
+  const {
+    data: partnerData,
+    isLoading: isPartnerLoading,
+    refetch,
+  } = useApiQuery({
+    url: `/admin/service-providers/names?${query}`,
+    queryKeys: ["service-provider", serviceId, cityId],
+    options: { enabled: false },
+  });
+
+  useEffect(() => {
+    if (serviceId || cityId) {
+      refetch();
+    }
+  }, [serviceId, cityId]);
 
   const {
     mutateAsync: submitForm,
@@ -127,6 +208,8 @@ const AddAppointment = () => {
       appointmentDate:
         data.appointmentDate &&
         format(new Date(data.appointmentDate), "yyyy-MM-dd"),
+      modes: data.modes ? [data.modes] : [],
+      cityId: null,
     };
     console.log("Booking Payload:", apiData);
 
@@ -198,7 +281,7 @@ const AddAppointment = () => {
                     <FormItem>
                       <FormLabel>Patient</FormLabel>
                       <FormControl>
-                        <Select
+                        {/* <Select
                           disabled={isPatientLoading}
                           value={field.value}
                           key={field.value}
@@ -217,47 +300,119 @@ const AddAppointment = () => {
                               <div disabled>No patients found</div>
                             )}
                           </SelectContent>
-                        </Select>
+                        </Select> */}
+                        <CustomCombobox
+                          items={patients}
+                          value={field.value}
+                          onChange={field.onChange}
+                          placeholder="Select Patient..."
+                          className="w-full"
+                          search={search}
+                          setSearch={setSearch}
+                          loading={isPatientLoading}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-
-                {/* Service Partner ID */}
-                {/* <FormField
-                  control={control}
-                  name="servicePartnerId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Service Partner ID</FormLabel>
-                      <FormControl>
-                        <Select
-                          disabled={isPartnerLoading}
-                          value={field.value}
-                          key={field.value}
-                          onValueChange={field.onChange}
-                        >
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Select Service Partner" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {partnerData?.data?.map((item) => (
-                              <SelectItem key={item._id} value={item._id}>
-                                {item.firstName} {item.lastName}
-                              </SelectItem>
-                            ))}
-                            {partnerData && partnerData.data.length === 0 && (
-                              <div disabled>No service providers found</div>
-                            )}
-                          </SelectContent>
-                        </Select>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                /> */}
               </div>
+
+              <FormField
+                control={control}
+                name="addressId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-base font-medium">
+                      Select Address
+                    </FormLabel>
+
+                    {!isAddressLoading && (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-3">
+                        {addressList?.map((address) => {
+                          const selected = field.value === address._id;
+
+                          return (
+                            <div
+                              key={address._id}
+                              onClick={() => {
+                                if (field.value === address._id) {
+                                  field.onChange(""); // DESELECT
+                                } else {
+                                  field.onChange(address._id); // SELECT
+                                }
+                              }}
+                              className={`
+                                cursor-pointer border rounded-xl p-4 shadow-sm 
+                                transition-all duration-200
+                                ${
+                                  selected
+                                    ? "border-blue-600 bg-blue-50 shadow-md"
+                                    : "border-gray-300 bg-white"
+                                }
+                                hover:shadow-md
+                              `}
+                            >
+                              {/* Title */}
+                              {/* <h3 className="font-semibold text-gray-900 text-lg mb-2">
+                                {address.title || "Address"}
+                              </h3> */}
+
+                              {/* Address Lines */}
+                              <div className="text-sm text-gray-700 space-y-1">
+                                <p>
+                                  <span className="font-semibold">Street:</span>{" "}
+                                  {address.street}
+                                </p>
+                                <p>
+                                  <span className="font-semibold">City:</span>{" "}
+                                  {address.city}
+                                </p>
+                                <p>
+                                  <span className="font-semibold">State:</span>{" "}
+                                  {address.state}
+                                </p>
+                                <p>
+                                  <span className="font-semibold">
+                                    Country:
+                                  </span>{" "}
+                                  {address.country}
+                                </p>
+                                <p>
+                                  <span className="font-semibold">
+                                    Pincode:
+                                  </span>{" "}
+                                  {address.pincode}
+                                </p>
+                              </div>
+
+                              {/* Default Badge */}
+                              {address.isDefault && (
+                                <div className="mt-3">
+                                  <span className="px-2 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700">
+                                    Default
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+
+                        {/* Empty State */}
+                        {addressList && addressList.length === 0 && (
+                          <div className="col-span-full text-sm text-muted-foreground">
+                            No saved addresses found
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {isAddressLoading && <Spinner />}
+
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
               <div className="gap-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 col-span-4">
                 {/* Appointment Date */}
@@ -272,6 +427,7 @@ const AddAppointment = () => {
                         <DatePicker
                           value={field.value}
                           onChange={field.onChange}
+                          disabled={{ before: new Date() }}
                         />
                       </FormControl>
                       <FormMessage />
@@ -396,61 +552,95 @@ const AddAppointment = () => {
                   control={control}
                   name="modes"
                   render={({ field }) => (
-                    <FormItem className="md:col-span-">
+                    <FormItem>
                       <FormLabel>Modes</FormLabel>
-                      <div className="flex flex-col gap-3 mt-2">
-                        {["Home Service", "Visit Provider Location"].map(
-                          (m) => (
-                            <label key={m} className="flex items-center gap-2">
-                              <input
-                                type="checkbox"
-                                value={m}
-                                checked={field.value?.includes(m)}
-                                onChange={(e) => {
-                                  const checked = e.target.checked;
-                                  if (checked)
-                                    field.onChange([...(field.value || []), m]);
-                                  else
-                                    field.onChange(
-                                      field.value.filter((x) => x !== m)
-                                    );
-                                }}
-                              />
-                              {m}
-                            </label>
-                          )
-                        )}
-                      </div>
+                      <FormControl>
+                        <RadioGroup
+                          value={field.value}
+                          onValueChange={field.onChange}
+                          className="flex flex-col gap-3 mt-2"
+                        >
+                          {["Home Service", "Visit Provider Location"].map(
+                            (m) => (
+                              <FormItem
+                                key={m}
+                                className="flex items-center space-x-2"
+                              >
+                                <FormControl>
+                                  <RadioGroupItem value={m} />
+                                </FormControl>
+                                <FormLabel className="font-normal">
+                                  {m}
+                                </FormLabel>
+                              </FormItem>
+                            )
+                          )}
+                        </RadioGroup>
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
               </div>
 
-              <FormField
-                control={control}
-                name="servicePartnerId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-base font-medium">
-                      Select Service Provider
-                    </FormLabel>
+              {serviceId && (
+                <div className="border p-4 rounded-md space-y-5">
+                  <FormField
+                    control={control}
+                    name="cityId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>City</FormLabel>
+                        <FormControl>
+                          <Select
+                            disabled={isCityLoading}
+                            value={field.value}
+                            key={field.value}
+                            onValueChange={field.onChange}
+                          >
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Select City" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {cityData?.data?.map((item) => (
+                                <SelectItem key={item._id} value={item._id}>
+                                  {item.name}
+                                </SelectItem>
+                              ))}
+                              {patientData && patientData.data.length === 0 && (
+                                <div disabled>No city found</div>
+                              )}
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={control}
+                    name="servicePartnerId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-base font-medium">
+                          Select Service Provider
+                        </FormLabel>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-3">
-                      {partnerData?.data?.map((partner) => {
-                        const selected = field.value === partner._id;
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-3">
+                          {partnerData?.data?.map((partner) => {
+                            const selected = field.value === partner._id;
 
-                        return (
-                          <div
-                            key={partner._id}
-                            onClick={() => {
-                              if (field.value === partner._id) {
-                                field.onChange(""); // <-- DESELECT
-                              } else {
-                                field.onChange(partner._id); // <-- SELECT
-                              }
-                            }}
-                            className={`
+                            return (
+                              <div
+                                key={partner._id}
+                                onClick={() => {
+                                  if (field.value === partner._id) {
+                                    field.onChange(""); // <-- DESELECT
+                                  } else {
+                                    field.onChange(partner._id); // <-- SELECT
+                                  }
+                                }}
+                                className={`
                 cursor-pointer border rounded-xl p-4 shadow-sm 
                 transition-all duration-200 
                 ${
@@ -460,11 +650,11 @@ const AddAppointment = () => {
                 }
                 hover:shadow-md
               `}
-                          >
-                            {/* Top Section */}
-                            <div className="flex items-center gap-3">
-                              {/* Profile Photo */}
-                              {/* <img
+                              >
+                                {/* Top Section */}
+                                <div className="flex items-center gap-3">
+                                  {/* Profile Photo */}
+                                  {/* <img
                                 src={
                                   partner?.documents?.profilePhoto ||
                                   "/placeholder.jpg"
@@ -473,51 +663,54 @@ const AddAppointment = () => {
                                 className="w-14 h-14 rounded-full object-cover border"
                               /> */}
 
-                              <Avatar className="size-14">
-                                <AvatarImage
-                                  src={partner?.documents?.profilePhoto}
-                                />
-                                <AvatarFallback>
-                                  {partner.firstName ?? "Partner"}
-                                </AvatarFallback>
-                              </Avatar>
+                                  <Avatar className="size-14">
+                                    <AvatarImage
+                                      src={partner?.documents?.profilePhoto}
+                                    />
+                                    <AvatarFallback>
+                                      {partner.firstName ?? "Partner"}
+                                    </AvatarFallback>
+                                  </Avatar>
 
-                              <div className="flex flex-col">
-                                {/* Name */}
-                                <h3 className="font-semibold text-gray-900 text-lg">
-                                  {partner.firstName} {partner.lastName}
-                                </h3>
+                                  <div className="flex flex-col">
+                                    {/* Name */}
+                                    <h3 className="font-semibold text-gray-900 text-lg">
+                                      {partner.firstName} {partner.lastName}
+                                    </h3>
 
-                                {/* City */}
-                                <p className="text-sm text-gray-600">
-                                  {partner?.currentAddress?.city ||
-                                    "City not available"}
-                                </p>
-                              </div>
-                            </div>
+                                    {/* City */}
+                                    <p className="text-sm text-gray-600">
+                                      {partner?.currentAddress?.city ||
+                                        "City not available"}
+                                    </p>
+                                  </div>
+                                </div>
 
-                            {/* Middle Section */}
-                            <div className="mt-3 space-y-1 text-sm">
-                              {/* Experience */}
-                              <p className="text-gray-700">
-                                <span className="font-semibold">
-                                  Experience:
-                                </span>{" "}
-                                {partner.yearsOfExperience} yrs
-                              </p>
+                                {/* Middle Section */}
+                                <div className="mt-3 space-y-1 text-sm">
+                                  {/* Experience */}
+                                  <p className="text-gray-700">
+                                    <span className="font-semibold">
+                                      Experience:
+                                    </span>{" "}
+                                    {partner.yearsOfExperience} yrs
+                                  </p>
 
-                              {/* Rating */}
-                              <p className="text-gray-700">
-                                <span className="font-semibold">Rating:</span>{" "}
-                                ⭐ {partner?.rating?.average?.toFixed(1) || 0} (
-                                {partner?.rating?.totalReviews || 0})
-                              </p>
-                            </div>
+                                  {/* Rating */}
+                                  <p className="text-gray-700">
+                                    <span className="font-semibold">
+                                      Rating:
+                                    </span>{" "}
+                                    ⭐{" "}
+                                    {partner?.rating?.average?.toFixed(1) || 0}{" "}
+                                    ({partner?.rating?.totalReviews || 0})
+                                  </p>
+                                </div>
 
-                            {/* Badge */}
-                            <div className="mt-3">
-                              <span
-                                className={`
+                                {/* Badge */}
+                                <div className="mt-3">
+                                  <span
+                                    className={`
                     px-2 py-1 rounded-full text-xs font-semibold
                     ${
                       partner.approvalStatus === "Approved"
@@ -529,26 +722,30 @@ const AddAppointment = () => {
                         : "bg-gray-100 text-gray-700"
                     }
                   `}
-                              >
-                                {partner.approvalStatus}
-                              </span>
+                                  >
+                                    {partner.approvalStatus}
+                                  </span>
+                                </div>
+                              </div>
+                            );
+                          })}
+
+                          {isPartnerLoading && <Spinner />}
+
+                          {/* No Providers */}
+                          {partnerData && partnerData.data.length === 0 && (
+                            <div className="col-span-full text-sm text-muted-foreground">
+                              No service providers found
                             </div>
-                          </div>
-                        );
-                      })}
-
-                      {/* No Providers */}
-                      {partnerData && partnerData.data.length === 0 && (
-                        <div className="col-span-full text-sm text-muted-foreground">
-                          No service providers found
+                          )}
                         </div>
-                      )}
-                    </div>
 
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              )}
 
               {/* Notes */}
               <FormField

@@ -59,29 +59,27 @@ import { Post } from "@/components/doctor/social/post";
 import { mockPosts } from "@/data/posts";
 import { Profile } from "@/components/doctor/social/profile";
 import { PostCard } from "@/components/doctor/social/post-card";
+import { useApiQuery } from "@/hooks/useApiQuery";
 
 const Social = () => {
   const [posts, setPosts] = useState(mockPosts);
   const [statusFilter, setStatusFilter] = useState("all");
   const [isOpen, setIsOpen] = useState(false);
 
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      setIsLoading(false);
-    }, 2000);
-
-    return () => {
-      clearTimeout(timeout);
-    };
-  }, []);
-
   const params = useParams();
 
-  const filteredPosts = posts.filter((p) =>
-    statusFilter === "all" ? true : p.status === statusFilter
-  );
+  const { data, isLoading, error } = useApiQuery({
+    url: `/socialPost/getPosts`,
+    queryKeys: ["post"],
+  });
+
+  console.log("data", data);
+
+  useEffect(() => {
+    if (data) {
+      setPosts(data)
+    }
+  }, [data]);
 
   return (
     <div>
@@ -186,8 +184,8 @@ const Social = () => {
 
         <div className="w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
           {!isLoading &&
-            posts.map((post) => (
-              <PostCard key={post.id} post={post} setPosts={setPosts} />
+            data.map((post) => (
+              <PostCard key={post._id} post={post} setPosts={setPosts} />
             ))}
 
           {posts.length === 0 && (

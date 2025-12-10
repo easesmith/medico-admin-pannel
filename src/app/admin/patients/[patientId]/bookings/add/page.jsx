@@ -27,19 +27,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
-import { PATCH, POST } from "@/constants/apiMethods";
+import { POST } from "@/constants/apiMethods";
 import { useApiMutation } from "@/hooks/useApiMutation";
 import { useApiQuery } from "@/hooks/useApiQuery";
-import {
-  buildQuery,
-  generateTimeOptions,
-  generateTimeRange,
-} from "@/lib/utils";
+import { buildQuery, generateTimeRange } from "@/lib/utils";
 import { format } from "date-fns/format";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { CustomCombobox } from "@/components/shared/custom-combobox";
 
 // -------------------------------
 // ZOD SCHEMA
@@ -50,7 +47,7 @@ const bookingSchema = z.object({
   cityId: z.string().optional(),
   appointmentDate: z.date().min(1, "Required"),
   startTime: z.string().min(1, "Required"),
-  endTime: z.string().min(1, "Required"),
+  endTime: z.string().optional(),
   //   duration: z.coerce.number().min(1),
   servicePartnerId: z.string().optional(),
   notes: z.string().optional(),
@@ -81,9 +78,13 @@ const addressList = [
 // -------------------------------
 // COMPONENT
 // -------------------------------
-const UpdateAppointment = () => {
-  const router = useRouter();
-  const params = useParams();
+const AddAppointment = () => {
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState("10");
+  const [pageCount, setPageCount] = useState(10);
+  const [search, setSearch] = useState("");
+  const [patients, setPatients] = useState([]);
+
   const [isAddressLoading, setIsAddressLoading] = useState(true);
 
   useEffect(() => {
@@ -96,13 +97,17 @@ const UpdateAppointment = () => {
     };
   }, []);
 
+  const router = useRouter();
+  const params = useParams();
   const [timeOptions, setTimeOptions] = useState([]);
 
+  console.log("search", search);
+  console.log("patients", patients);
   const form = useForm({
     resolver: zodResolver(bookingSchema),
     defaultValues: {
       serviceId: "",
-      patientId: "",
+      patientId: params.patientId || "",
       appointmentDate: "",
       startTime: "",
       endTime: "",
@@ -110,82 +115,53 @@ const UpdateAppointment = () => {
       servicePartnerId: "",
       notes: "",
       category: "nursing",
-      modes: [],
+      modes: "",
     },
   });
 
-  const {
-    control,
-    handleSubmit,
-    watch,
+  const { control, handleSubmit, watch } = form;
 
-    reset,
-  } = form;
   const serviceId = watch("serviceId");
   const cityId = watch("cityId");
-
-  const { data, isLoading, error } = useApiQuery({
-    url: `/booking/bookings/${params.appointmentId}`,
-    queryKeys: ["bookings", params.appointmentId],
-  });
-
-  const booking = data?.data;
-  console.log("booking", booking);
-
-  useEffect(() => {
-    if (booking) {
-      const {
-        serviceId,
-        patientId,
-        servicePartnerId,
-        appointmentDate,
-        slotTime,
-        category,
-        city,
-        modes,
-        notes,
-      } = booking;
-      reset({
-        serviceId: serviceId?._id,
-        patientId: patientId?._id,
-        servicePartnerId: servicePartnerId?._id || "",
-        appointmentDate: appointmentDate && new Date(appointmentDate),
-        startTime: slotTime?.startTime,
-        endTime: slotTime?.endTime,
-        category,
-        modes: modes?.[0] || "",
-        notes,
-      });
-    }
-  }, [data]);
 
   const { data: serviceData, isLoading: isServiceLoading } = useApiQuery({
     url: `/admin/services/names`,
     queryKeys: ["service-admin"],
   });
 
-  useEffect(() => {
-    if (serviceId) {
-      const serviceDoc = serviceData.data.find(
-        (item) => item._id === serviceId
-      );
-      const { consultationSlots } = serviceDoc?.slotConfig;
-      console.log("consultationSlots", consultationSlots);
+  const handleServiceChange = (id) => {
+    const serviceDoc = serviceData.data.find((item) => item._id === id);
+    const { consultationSlots } = serviceDoc?.slotConfig;
+    console.log("consultationSlots", consultationSlots);
 
-      const timeOptions = generateTimeRange(
-        consultationSlots?.startTime,
-        consultationSlots?.endTime
-      );
-      setTimeOptions(timeOptions);
-    }
-  }, [serviceId]);
+    const timeOptions = generateTimeRange(
+      consultationSlots?.startTime,
+      consultationSlots?.endTime
+    );
+    setTimeOptions(timeOptions);
+  };
 
-  console.log("serviceData", serviceData);
-
-  const { data: patientData, isLoading: isPatientLoading } = useApiQuery({
-    url: `/admin/patients/names`,
-    queryKeys: ["patient-admin"],
+  const paitentQuery = buildQuery({
+    isActive: true,
+    page,
+    searchQuery: search,
   });
+  const { data: patientData, isLoading: isPatientLoading } = useApiQuery({
+    url: `/admin/patients/names?${paitentQuery}`,
+    queryKeys: ["patients", page, search],
+  });
+
+  console.log("patientData", patientData);
+
+  useEffect(() => {
+    if (patientData) {
+      const modifiedPatients = patientData?.data?.map((item) => ({
+        value: item._id,
+        label: item.firstName,
+      }));
+      setPatients(modifiedPatients);
+    }
+  }, [patientData]);
 
   const { data: cityData, isLoading: isCityLoading } = useApiQuery({
     url: `/city/getAllCities`,
@@ -218,8 +194,8 @@ const UpdateAppointment = () => {
     isPending: isSubmitFormLoading,
     data: result,
   } = useApiMutation({
-    url: `/admin/bookings/update/${params.appointmentId}`,
-    method: PATCH,
+    url: "/admin/bookings/create",
+    method: POST,
     invalidateKey: ["bookings"],
   });
 
@@ -230,24 +206,25 @@ const UpdateAppointment = () => {
         data.appointmentDate &&
         format(new Date(data.appointmentDate), "yyyy-MM-dd"),
       modes: data.modes ? [data.modes] : [],
-      cityId: null,
     };
     console.log("Booking Payload:", apiData);
 
     await submitForm(apiData);
   };
 
+  console.log("partnerData", partnerData);
+
   useEffect(() => {
     if (result) {
       console.log("result", result);
-      router.push("/admin/appointments");
+      router.push(`/admin/patients/${params.patientId}/bookings`);
     }
   }, [result]);
 
   return (
     <div className="space-y-6">
       <BackLink href="/admin/appointments">
-        <H1>Update Booking</H1>
+        <H1>Create Booking</H1>
       </BackLink>
 
       <Card className="shadow-md">
@@ -264,10 +241,13 @@ const UpdateAppointment = () => {
                       <FormLabel>Service</FormLabel>
                       <FormControl>
                         <Select
-                          disabled
+                          disabled={isServiceLoading}
                           value={field.value}
                           key={field.value}
-                          onValueChange={field.onChange}
+                          onValueChange={(value) => {
+                            field.onChange(value);
+                            handleServiceChange(value);
+                          }}
                         >
                           <SelectTrigger className="w-full">
                             <SelectValue placeholder="Select Service" />
@@ -297,8 +277,8 @@ const UpdateAppointment = () => {
                     <FormItem>
                       <FormLabel>Patient</FormLabel>
                       <FormControl>
-                        <Select
-                          disabled
+                        {/* <Select
+                          disabled={isPatientLoading}
                           value={field.value}
                           key={field.value}
                           onValueChange={field.onChange}
@@ -316,12 +296,57 @@ const UpdateAppointment = () => {
                               <div disabled>No patients found</div>
                             )}
                           </SelectContent>
-                        </Select>
+                        </Select> */}
+                        <CustomCombobox
+                          items={patients}
+                          value={field.value}
+                          onChange={field.onChange}
+                          placeholder="Select Patient..."
+                          className="w-full"
+                          search={search}
+                          setSearch={setSearch}
+                          loading={isPatientLoading}
+                          disabled
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
+
+                {/* Service Partner ID */}
+                {/* <FormField
+                  control={control}
+                  name="servicePartnerId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Service Partner ID</FormLabel>
+                      <FormControl>
+                        <Select
+                          disabled={isPartnerLoading}
+                          value={field.value}
+                          key={field.value}
+                          onValueChange={field.onChange}
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Select Service Partner" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {partnerData?.data?.map((item) => (
+                              <SelectItem key={item._id} value={item._id}>
+                                {item.firstName} {item.lastName}
+                              </SelectItem>
+                            ))}
+                            {partnerData && partnerData.data.length === 0 && (
+                              <div disabled>No service providers found</div>
+                            )}
+                          </SelectContent>
+                        </Select>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                /> */}
               </div>
 
               <FormField
@@ -349,15 +374,15 @@ const UpdateAppointment = () => {
                                 }
                               }}
                               className={`
-                  cursor-pointer border rounded-xl p-4 shadow-sm 
-                  transition-all duration-200
-                  ${
-                    selected
-                      ? "border-blue-600 bg-blue-50 shadow-md"
-                      : "border-gray-300 bg-white"
-                  }
-                  hover:shadow-md
-                `}
+                                cursor-pointer border rounded-xl p-4 shadow-sm 
+                                transition-all duration-200
+                                ${
+                                  selected
+                                    ? "border-blue-600 bg-blue-50 shadow-md"
+                                    : "border-gray-300 bg-white"
+                                }
+                                hover:shadow-md
+                              `}
                             >
                               {/* Title */}
                               {/* <h3 className="font-semibold text-gray-900 text-lg mb-2">
@@ -433,6 +458,7 @@ const UpdateAppointment = () => {
                         <DatePicker
                           value={field.value}
                           onChange={field.onChange}
+                          disabled={{ before: new Date() }}
                         />
                       </FormControl>
                       <FormMessage />
@@ -449,14 +475,7 @@ const UpdateAppointment = () => {
                       <FormItem>
                         <FormLabel>Start Time</FormLabel>
                         <FormControl>
-                          {/* <Input
-                          type="time"
-                          step="1800" // 30 minutes → 30 * 60 = 1800 seconds
-                          min="00:00"
-                          max="23:30"
-                          {...field}
-                        /> */}
-
+                          {/* <Input type="time" {...field} /> */}
                           <Select
                             {...field}
                             onValueChange={(e) => {
@@ -538,7 +557,6 @@ const UpdateAppointment = () => {
                     <FormItem>
                       <FormLabel>Category</FormLabel>
                       <Select
-                        key={field.value}
                         value={field.value}
                         onValueChange={field.onChange}
                       >
@@ -565,7 +583,7 @@ const UpdateAppointment = () => {
                   control={control}
                   name="modes"
                   render={({ field }) => (
-                    <FormItem className="md:col-span-">
+                    <FormItem>
                       <FormLabel>Modes</FormLabel>
                       <FormControl>
                         <RadioGroup
@@ -639,22 +657,21 @@ const UpdateAppointment = () => {
                           Select Service Provider
                         </FormLabel>
 
-                        {!isPartnerLoading && (
-                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-3">
-                            {partnerData?.data?.map((partner) => {
-                              const selected = field.value === partner._id;
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-3">
+                          {partnerData?.data?.map((partner) => {
+                            const selected = field.value === partner._id;
 
-                              return (
-                                <div
-                                  key={partner._id}
-                                  onClick={() => {
-                                    if (field.value === partner._id) {
-                                      field.onChange(""); // <-- DESELECT
-                                    } else {
-                                      field.onChange(partner._id); // <-- SELECT
-                                    }
-                                  }}
-                                  className={`
+                            return (
+                              <div
+                                key={partner._id}
+                                onClick={() => {
+                                  if (field.value === partner._id) {
+                                    field.onChange(""); // <-- DESELECT
+                                  } else {
+                                    field.onChange(partner._id); // <-- SELECT
+                                  }
+                                }}
+                                className={`
                 cursor-pointer border rounded-xl p-4 shadow-sm 
                 transition-all duration-200 
                 ${
@@ -664,59 +681,67 @@ const UpdateAppointment = () => {
                 }
                 hover:shadow-md
               `}
-                                >
-                                  {/* Top Section */}
-                                  <div className="flex items-center gap-3">
-                                    {/* Profile Photo */}
-                                    <Avatar className="size-14">
-                                      <AvatarImage
-                                        src={partner?.documents?.profilePhoto}
-                                      />
-                                      <AvatarFallback>
-                                        {partner.firstName ?? "Partner"}
-                                      </AvatarFallback>
-                                    </Avatar>
+                              >
+                                {/* Top Section */}
+                                <div className="flex items-center gap-3">
+                                  {/* Profile Photo */}
+                                  {/* <img
+                                src={
+                                  partner?.documents?.profilePhoto ||
+                                  "/placeholder.jpg"
+                                }
+                                alt="profile"
+                                className="w-14 h-14 rounded-full object-cover border"
+                              /> */}
 
-                                    <div className="flex flex-col">
-                                      {/* Name */}
-                                      <h3 className="font-semibold text-gray-900 text-lg">
-                                        {partner.firstName} {partner.lastName}
-                                      </h3>
+                                  <Avatar className="size-14">
+                                    <AvatarImage
+                                      src={partner?.documents?.profilePhoto}
+                                    />
+                                    <AvatarFallback>
+                                      {partner.firstName ?? "Partner"}
+                                    </AvatarFallback>
+                                  </Avatar>
 
-                                      {/* City */}
-                                      <p className="text-sm text-gray-600">
-                                        {partner?.currentAddress?.city ||
-                                          "City not available"}
-                                      </p>
-                                    </div>
-                                  </div>
+                                  <div className="flex flex-col">
+                                    {/* Name */}
+                                    <h3 className="font-semibold text-gray-900 text-lg">
+                                      {partner.firstName} {partner.lastName}
+                                    </h3>
 
-                                  {/* Middle Section */}
-                                  <div className="mt-3 space-y-1 text-sm">
-                                    {/* Experience */}
-                                    <p className="text-gray-700">
-                                      <span className="font-semibold">
-                                        Experience:
-                                      </span>{" "}
-                                      {partner.yearsOfExperience} yrs
-                                    </p>
-
-                                    {/* Rating */}
-                                    <p className="text-gray-700">
-                                      <span className="font-semibold">
-                                        Rating:
-                                      </span>{" "}
-                                      ⭐{" "}
-                                      {partner?.rating?.average?.toFixed(1) ||
-                                        0}{" "}
-                                      ({partner?.rating?.totalReviews || 0})
+                                    {/* City */}
+                                    <p className="text-sm text-gray-600">
+                                      {partner?.currentAddress?.city ||
+                                        "City not available"}
                                     </p>
                                   </div>
+                                </div>
 
-                                  {/* Badge */}
-                                  <div className="mt-3">
-                                    <span
-                                      className={`
+                                {/* Middle Section */}
+                                <div className="mt-3 space-y-1 text-sm">
+                                  {/* Experience */}
+                                  <p className="text-gray-700">
+                                    <span className="font-semibold">
+                                      Experience:
+                                    </span>{" "}
+                                    {partner.yearsOfExperience} yrs
+                                  </p>
+
+                                  {/* Rating */}
+                                  <p className="text-gray-700">
+                                    <span className="font-semibold">
+                                      Rating:
+                                    </span>{" "}
+                                    ⭐{" "}
+                                    {partner?.rating?.average?.toFixed(1) || 0}{" "}
+                                    ({partner?.rating?.totalReviews || 0})
+                                  </p>
+                                </div>
+
+                                {/* Badge */}
+                                <div className="mt-3">
+                                  <span
+                                    className={`
                     px-2 py-1 rounded-full text-xs font-semibold
                     ${
                       partner.approvalStatus === "Approved"
@@ -728,24 +753,23 @@ const UpdateAppointment = () => {
                         : "bg-gray-100 text-gray-700"
                     }
                   `}
-                                    >
-                                      {partner.approvalStatus}
-                                    </span>
-                                  </div>
+                                  >
+                                    {partner.approvalStatus}
+                                  </span>
                                 </div>
-                              );
-                            })}
-
-                            {/* No Providers */}
-                            {partnerData && partnerData.data.length === 0 && (
-                              <div className="col-span-full text-sm text-muted-foreground">
-                                No service providers found
                               </div>
-                            )}
-                          </div>
-                        )}
+                            );
+                          })}
 
-                        {isPartnerLoading && <Spinner />}
+                          {isPartnerLoading && <Spinner />}
+
+                          {/* No Providers */}
+                          {partnerData && partnerData.data.length === 0 && (
+                            <div className="col-span-full text-sm text-muted-foreground">
+                              No service providers found
+                            </div>
+                          )}
+                        </div>
 
                         <FormMessage />
                       </FormItem>
@@ -777,7 +801,7 @@ const UpdateAppointment = () => {
               {/* Submit Button */}
               <div className="flex gap-3 justify-end">
                 <Button type="submit" className="">
-                  {isSubmitFormLoading ? <Spinner /> : "Update Booking"}
+                  {isSubmitFormLoading ? <Spinner /> : "Create Booking"}
                 </Button>
               </div>
             </form>
@@ -788,4 +812,4 @@ const UpdateAppointment = () => {
   );
 };
 
-export default UpdateAppointment;
+export default AddAppointment;
