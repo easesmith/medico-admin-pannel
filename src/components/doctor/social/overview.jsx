@@ -12,6 +12,10 @@ import { Label } from "../../ui/label";
 import { Switch } from "../../ui/switch";
 import { Button } from "../../ui/button";
 import { Comment } from "./comment";
+import { useApiMutation } from "@/hooks/useApiMutation";
+import { POST } from "@/constants/apiMethods";
+import { useParams } from "next/navigation";
+import { Spinner } from "@/components/ui/spinner";
 
 const statusLabel = {
   published: "Published",
@@ -20,6 +24,18 @@ const statusLabel = {
 };
 
 export const Overview = ({ selectedPost }) => {
+  const params = useParams();
+
+  const { mutateAsync, isPending, data } = useApiMutation({
+    url: "/socialPost/followDoctor",
+    method: POST,
+    invalidateKey: ["post", params.postId],
+  });
+
+  const handleClick = async () => {
+    await mutateAsync({ targetDoctorId: selectedPost?.doctor?._id });
+  };
+
   return (
     <div className="flex-1 min-w-0">
       <Tabs defaultValue="overview" className="h-full flex flex-col">
@@ -37,24 +53,34 @@ export const Overview = ({ selectedPost }) => {
           className="flex-1 px-6 pb-6 pt-2 overflow-hidden"
         >
           <ScrollArea className="h-full space-y-4">
-            <div className="flex items-center gap-3">
-              <Avatar>
-                <AvatarFallback>
-                  {selectedPost.creator?.name
-                    .split(" ")
-                    .map((s) => s[0])
-                    .join("")
-                    .slice(0, 2)}
-                </AvatarFallback>
-              </Avatar>
-              <div>
-                <div className="text-sm font-semibold">
-                  {selectedPost?.creator?.name}
-                </div>
-                <div className="text-xs text-slate-500">
-                  {selectedPost?.creator?.position}
+            <div className="flex justify-between items-center gap-5">
+              <div className="flex items-center gap-3">
+                <Avatar>
+                  <AvatarFallback>
+                    {selectedPost.creator?.name
+                      .split(" ")
+                      .map((s) => s[0])
+                      .join("")
+                      .slice(0, 2)}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <div className="text-sm font-semibold">
+                    {selectedPost?.creator?.name}
+                  </div>
+                  <div className="text-xs text-slate-500">
+                    {selectedPost?.creator?.position}
+                  </div>
                 </div>
               </div>
+              <Button
+                disabled={isPending}
+                onClick={handleClick}
+                className=""
+                variant={"default"}
+              >
+                {isPending ? <Spinner /> : "Follow"}
+              </Button>
             </div>
 
             <div className="grid grid-cols-2 gap-3 text-sm mt-3">

@@ -1,5 +1,6 @@
 import { axiosInstance } from "@/lib/axiosInstance";
 import { useQuery } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 
 const fetchApi = async ({ url, params, axiosOptions }, retryCount = 0) => {
   const maxRetries = 3;
@@ -40,13 +41,29 @@ export function useApiQuery({
   options = {},
   axiosOptions = {},
 }) {
+  const router = useRouter();
+
   return useQuery({
     queryKey: [params, ...queryKeys], // Ensures caching based on query params
-    queryFn: () => fetchApi({ url, params, axiosOptions }),
+    // queryFn: () => fetchApi({ url, params, axiosOptions }),
+    queryFn: async () => {
+      try {
+        return await fetchApi({ url, params, axiosOptions });
+      } catch (error) {
+        const status = error?.response?.status || error?.status;
+
+        if (status === 401) {
+          router.push("/");
+          return; // must return or reject after redirect
+        }
+
+        throw error; // propagate for React Query retries, logging, etc.
+      }
+    },
     staleTime: 1000 * 60 * 5, // cache stays fresh for 5 min
     refetchOnWindowFocus: false, // prevent auto refetch on tab switch
     refetchOnMount: false, // don’t refetch immediately on mount
-    retry: 1, // retry once (instead of infinite retries)
+    retry: 1,
     ...options, // Allows passing additional options like staleTime, enabled, etc.
   });
 }

@@ -67,6 +67,7 @@ const Login = () => {
   useEffect(() => {
     if (result) {
       console.log("login result", result);
+      // Cookies
       
       // const { accessToken, refreshToken, userInfo } = result.cookies;
       // setAuthCookies({
