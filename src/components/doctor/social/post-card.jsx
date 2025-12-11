@@ -13,6 +13,7 @@ import {
   EyeIcon,
   EyeOffIcon,
   HeartIcon,
+  ImageOffIcon,
   MessageSquareIcon,
   MoreVerticalIcon,
 } from "lucide-react";
@@ -24,6 +25,7 @@ export const PostCard = ({ post, setPosts }) => {
   const router = useRouter();
   const params = useParams();
 
+  const [error, setError] = useState(false);
   const [isAlertModalOpen, setIsAlertModalOpen] = useState(false);
 
   const handleViewPost = () => {
@@ -54,6 +56,8 @@ export const PostCard = ({ post, setPosts }) => {
     setIsAlertModalOpen(true);
   };
 
+  
+
   return (
     // <Card className="overflow-hidden rounded-2xl shadow-sm">
     <Card className="overflow-hidden rounded-none shadow-none aspect-9/16">
@@ -72,7 +76,9 @@ export const PostCard = ({ post, setPosts }) => {
                 {post?.creator?.position}
               </p>
             )}
-            <p className="font-medium text-xs">{post?.creator?.location || "none"}</p>
+            <p className="font-medium text-xs">
+              {post?.creator?.location || "none"}
+            </p>
           </div>
         </div>
 
@@ -99,16 +105,11 @@ export const PostCard = ({ post, setPosts }) => {
       </CardHeader>
 
       {/* Media Preview */}
-      <div className="w-full aspect-square bg-slate-200 flex items-center justify-center">
-        {post.type === "image" && (
-          //   <p className="text-slate-500">🖼 Image Preview</p>
-          <Image
-            src="/dummy/blog-test.jpg"
-            alt="image"
-            width={800}
-            height={600}
-            className="aspect-square object-cover"
-          />
+      <div className="w-full aspect-square bg-slate-100 flex items-center justify-center">
+        {post.type === "TEXT" && (
+          <div className="flex items-center justify-center aspect-video w-full h-full bg-slate-100 rounded">
+            <ImageOffIcon className="w-10 h-10 text-gray-400" />
+          </div>
         )}
         {/* {post.type === "GALLERY" && (
           <Image
@@ -119,22 +120,38 @@ export const PostCard = ({ post, setPosts }) => {
             className="aspect-square object-cover"
           />
         )} */}
-        {post.type === "GALLERY" && (
-          <img
-            src={`${process.env.NEXT_PUBLIC_IMAGE_URL}${post?.mediaUrls?.[0]}`}
-            alt="image"
-            width={800}
-            height={600}
-            className="aspect-square object-cover"
-          />
+        {post?.type === "GALLERY" && (
+          <>
+            {!error && (
+              <Image
+                src={
+                  post?.mediaUrls?.[0]?.includes("https")
+                    ? post?.mediaUrls?.[0]
+                    : `${process.env.NEXT_PUBLIC_IMAGE_URL}${post?.mediaUrls?.[0]}`
+                }
+                alt="image"
+                width={800}
+                height={600}
+                className="aspect-square object-cover w-full"
+                onError={() => setError(true)}
+              />
+            )}
+            {error && (
+              <div className="flex items-center justify-center aspect-video w-full h-full bg-slate-100 rounded">
+                <ImageOffIcon className="w-10 h-10 text-gray-400" />
+              </div>
+            )}
+          </>
         )}
-        {post.type === "video" && (
-          //   <p className="text-slate-500">🎥 Video Preview</p>
-          <video
-            src="/dummy/video.mp4"
-            controls
-            className="aspect-square object-cover"
-          />
+        {post.type === "REEL" && (
+          <div className="relative w-full max-w-sm mx-auto h-[80vh] overflow-hidden rounded-xl bg-black">
+            <video
+              src="/dummy/video.mp4"
+              controls
+              className="h-full w-full object-cover"
+              playsInline
+            />
+          </div>
         )}
         {post.type === "article" && (
           //   <p className="text-slate-500">📄 Article Content</p>

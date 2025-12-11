@@ -40,7 +40,7 @@ export const Overview = ({ selectedPost }) => {
             <div className="flex items-center gap-3">
               <Avatar>
                 <AvatarFallback>
-                  {selectedPost.doctorName
+                  {selectedPost.creator?.name
                     .split(" ")
                     .map((s) => s[0])
                     .join("")
@@ -49,36 +49,40 @@ export const Overview = ({ selectedPost }) => {
               </Avatar>
               <div>
                 <div className="text-sm font-semibold">
-                  {selectedPost.doctorName}
+                  {selectedPost?.creator?.name}
                 </div>
                 <div className="text-xs text-slate-500">
-                  {selectedPost.doctorSpecialization}
+                  {selectedPost?.creator?.position}
                 </div>
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3 text-sm mt-3">
-              <div className="p-3 rounded-xl border bg-slate-50">
+              {/* <div className="p-3 rounded-xl border bg-slate-50">
                 <div className="text-xs text-slate-500">Category</div>
                 <div className="mt-1 font-medium">{selectedPost.category}</div>
-              </div>
-              <div className="p-3 rounded-xl border bg-slate-50">
+              </div> */}
+              <div className="p-3 rounded-xl border col-span-2 bg-slate-50">
                 <div className="text-xs text-slate-500">Location</div>
                 <div className="mt-1 font-medium">
-                  {selectedPost.city || "Unknown"}
+                  {selectedPost?.creator?.location || "Unknown"}
                 </div>
               </div>
               <div className="p-3 rounded-xl border flex items-center justify-between">
                 <div>
                   <div className="text-xs text-slate-500">Views</div>
-                  <div className="mt-1 font-medium">{selectedPost.views}</div>
+                  <div className="mt-1 font-medium">
+                    {selectedPost?.stats?.views}
+                  </div>
                 </div>
                 <EyeIcon className="h-4 w-4 text-slate-400" />
               </div>
               <div className="p-3 rounded-xl border flex items-center justify-between">
                 <div>
                   <div className="text-xs text-slate-500">Likes</div>
-                  <div className="mt-1 font-medium">{selectedPost.likes}</div>
+                  <div className="mt-1 font-medium">
+                    {selectedPost?.stats?.likes}
+                  </div>
                 </div>
                 <HeartIcon className="h-4 w-4 text-emerald-500" />
               </div>
@@ -127,14 +131,14 @@ export const Overview = ({ selectedPost }) => {
           className="flex-1 px-6 pb-6 pt-2 overflow-hidden"
         >
           <ScrollArea className="h-full space-y-3">
-            {selectedPost.comments.length === 0 && (
+            {selectedPost?.comments?.length === 0 && (
               <p className="text-sm text-slate-500 mt-4">
                 No comments yet for this article.
               </p>
             )}
 
             <div className="flex flex-col gap-3">
-              {selectedPost.comments.map((comment) => (
+              {selectedPost?.comments?.map((comment) => (
                 <Comment key={comment.id} comment={comment} />
               ))}
             </div>

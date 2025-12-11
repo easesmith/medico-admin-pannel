@@ -62,7 +62,7 @@ import { PostCard } from "@/components/doctor/social/post-card";
 import { useApiQuery } from "@/hooks/useApiQuery";
 
 const Social = () => {
-  const [posts, setPosts] = useState(mockPosts);
+  const [posts, setPosts] = useState([]);
   const [statusFilter, setStatusFilter] = useState("all");
   const [isOpen, setIsOpen] = useState(false);
 
@@ -184,11 +184,11 @@ const Social = () => {
 
         <div className="w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
           {!isLoading &&
-            data.map((post) => (
+            posts?.map((post) => (
               <PostCard key={post._id} post={post} setPosts={setPosts} />
             ))}
 
-          {posts.length === 0 && (
+          {posts?.length === 0 && (
             <p className="text-center text-slate-500 py-10 sm:col-span-2 lg:col-span-3 2xl:col-span-4">
               No posts found.
             </p>

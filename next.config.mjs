@@ -9,6 +9,10 @@ const nextConfig = {
         port: "5005",
         pathname: "/images/**",
       },
+      {
+        protocol: "https",
+        hostname: "thumbs.dreamstime.com",
+      },
     ],
   },
   /* config options here */
