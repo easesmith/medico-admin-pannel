@@ -17,6 +17,8 @@ import { useApiMutation } from "@/hooks/useApiMutation";
 import { useRouter } from "next/navigation";
 import { Switch } from "../ui/switch";
 import { Spinner } from "../ui/spinner";
+import { cn } from "@/lib/utils";
+import { STATUS_STYLES } from "@/constants/status";
 
 export const ServicePartner = ({ servicePartner }) => {
   const router = useRouter();
@@ -90,7 +92,13 @@ export const ServicePartner = ({ servicePartner }) => {
 
         {/* Verification Status */}
         <TableCell>
-          <Badge variant={"secondary"} className="capitalize">
+          <Badge
+            variant={"success"}
+            className={cn(
+              "capitalize",
+              STATUS_STYLES[servicePartner?.approvalStatus]
+            )}
+          >
             {servicePartner?.approvalStatus}
           </Badge>
         </TableCell>

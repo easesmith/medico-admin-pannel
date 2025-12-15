@@ -9,6 +9,9 @@ import {
   CardHeader,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Spinner } from "@/components/ui/spinner";
+import { DELETE, PATCH } from "@/constants/apiMethods";
+import { useApiMutation } from "@/hooks/useApiMutation";
 import {
   EyeIcon,
   EyeOffIcon,
@@ -45,18 +48,30 @@ export const PostCard = ({ post, setPosts }) => {
     );
   };
 
-  const handleDeletePost = (postId) => {
-    setPosts((prev) => prev.filter((p) => p.id !== postId));
-    if (selectedPost?.id === postId) {
-      setSheetOpen(false);
-    }
+  const { mutateAsync, isPending, data } = useApiMutation({
+    url: `/socialPost/posts/${post._id}`,
+    method: DELETE,
+    invalidateKey: ["post"],
+  });
+
+  const { mutateAsync: hidePost, isPending: isHidePostLoading } =
+    useApiMutation({
+      url: `/socialPost/posts/${post._id}/hide`,
+      method: PATCH,
+      invalidateKey: ["post"],
+    });
+
+  const handleDeletePost = async () => {
+    await mutateAsync();
   };
 
   const onDelete = () => {
     setIsAlertModalOpen(true);
   };
 
-  
+  const handleHidePost = async () => {
+    await hidePost();
+  };
 
   return (
     // <Card className="overflow-hidden rounded-2xl shadow-sm">
@@ -88,9 +103,11 @@ export const PostCard = ({ post, setPosts }) => {
             size="sm"
             variant="outline"
             className="rounded-full text-xs"
-            onClick={() => handleToggleStatus(post._id)}
+            onClick={handleHidePost}
           >
-            {post?.status === "hidden" ? (
+            {isHidePostLoading ? (
+              <Spinner />
+            ) : post?.status === "hidden" ? (
               <>
                 <EyeIcon className="h-3 w-3 mr-1" /> Unhide
               </>
@@ -203,7 +220,7 @@ export const PostCard = ({ post, setPosts }) => {
           description="Are you sure you want to delete this post? This action cannot be undone."
           isModalOpen={isAlertModalOpen}
           setIsModalOpen={setIsAlertModalOpen}
-          disabled={false}
+          disabled={isPending}
           onConfirm={handleDeletePost}
         />
       )}
