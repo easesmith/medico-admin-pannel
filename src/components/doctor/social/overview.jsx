@@ -63,7 +63,12 @@ export const Overview = ({ selectedPost }) => {
             <div className="flex justify-between items-center gap-5">
               <div className="flex items-center gap-3">
                 <Avatar>
-                  <AvatarImage src="https://github.com/shadcn.png" />
+                  <AvatarImage
+                    src={
+                      selectedPost?.creator?.profilePhoto ||
+                      "https://github.com/shadcn.png"
+                    }
+                  />
                   <AvatarFallback>
                     {selectedPost.creator?.name
                       .split(" ")
@@ -87,7 +92,13 @@ export const Overview = ({ selectedPost }) => {
                 className=""
                 variant={"default"}
               >
-                {isPending ? <Spinner /> : "Follow"}
+                {isPending ? (
+                  <Spinner />
+                ) : selectedPost.isFollowed ? (
+                  "Unfollow"
+                ) : (
+                  "Follow"
+                )}
               </Button>
             </div>
 
@@ -122,7 +133,7 @@ export const Overview = ({ selectedPost }) => {
               </div>
             </div>
 
-            <div className="p-3 rounded-xl border flex items-center justify-between mt-3">
+            <div className="p-3 hidden rounded-xl border flex items-center justify-between mt-3">
               <div>
                 <div className="text-xs text-slate-500">Status</div>
                 <div className="mt-1">

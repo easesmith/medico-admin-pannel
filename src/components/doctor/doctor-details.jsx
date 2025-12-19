@@ -207,7 +207,7 @@ export const DoctorDetails = ({ doctor }) => {
       </Card>
 
       {/* Social */}
-      <Card>
+      {/* <Card>
         <CardHeader>
           <CardTitle>Social Stats</CardTitle>
         </CardHeader>
@@ -219,7 +219,7 @@ export const DoctorDetails = ({ doctor }) => {
             <strong>Active:</strong> {doctor.isActive ? "Yes" : "No"}
           </p>
         </CardContent>
-      </Card>
+      </Card> */}
     </div>
   );
 };

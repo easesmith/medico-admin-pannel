@@ -60,6 +60,8 @@ import { mockPosts } from "@/data/posts";
 import { Profile } from "@/components/doctor/social/profile";
 import { PostCard } from "@/components/doctor/social/post-card";
 import { useApiQuery } from "@/hooks/useApiQuery";
+import { useApiMutation } from "@/hooks/useApiMutation";
+import { POST } from "@/constants/apiMethods";
 
 const Social = () => {
   const [posts, setPosts] = useState([]);
@@ -73,11 +75,26 @@ const Social = () => {
     queryKeys: ["post"],
   });
 
+  // const {
+  //   mutateAsync,
+  //   isPending: isLoading,
+  //   data,
+  // } = useApiMutation({
+  //   url: `/socialPost/hidePost/${123}/toggle?action=get`,
+  //   method: POST,
+  //   invalidateKey: ["post"],
+  //   isToast:false
+  // });
+
   console.log("data", data);
+
+  // useEffect(() => {
+  //   mutateAsync()
+  // }, []);
 
   useEffect(() => {
     if (data) {
-      setPosts(data);
+      setPosts(data || []);
     }
   }, [data]);
 
@@ -93,7 +110,7 @@ const Social = () => {
           </Button>
         </div>
         {/* Filters */}
-        <div className="flex flex-wrap items-center justify-end gap-3">
+        <div className="hidden flex-wrap items-center justify-end gap-3">
           <div>
             <label className="text-sm font-medium mb-1 block">Status</label>
             <Select

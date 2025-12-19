@@ -25,6 +25,7 @@ import {
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
+import { SocialPostSkeleton } from "@/components/doctor/social/skeleton/post-details/social-post-skeleton";
 
 const statusLabel = {
   published: "Published",
@@ -50,12 +51,17 @@ const PostDetails = () => {
   }, [api]);
 
   const { data, isLoading } = useApiQuery({
-    url: `/socialPost/getPostById/${params.postId}`,
+    url: `/socialPost/getPostByAdmin/${params.postId}`,
     queryKeys: ["post", params.postId],
   });
 
   console.log("data", data);
   const selectedPost = data;
+
+  if (isLoading) {
+    return <SocialPostSkeleton />;
+  }
+
 
   return (
     <div className="space-y-6">
@@ -138,7 +144,7 @@ const PostDetails = () => {
                     <p className="text-sm">{selectedPost.content}</p>
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="space-y-2 hidden">
                     <h3 className="text-sm font-semibold">Tags</h3>
                     <div className="flex flex-wrap gap-2">
                       {/* {selectedPost.tags.map((tag) => (

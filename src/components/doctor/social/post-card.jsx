@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Spinner } from "@/components/ui/spinner";
-import { DELETE, PATCH } from "@/constants/apiMethods";
+import { DELETE, PATCH, POST } from "@/constants/apiMethods";
 import { useApiMutation } from "@/hooks/useApiMutation";
 import {
   EyeIcon,
@@ -107,7 +107,7 @@ export const PostCard = ({ post, setPosts }) => {
           >
             {isHidePostLoading ? (
               <Spinner />
-            ) : post?.status === "hidden" ? (
+            ) : post?.isHidden ? (
               <>
                 <EyeIcon className="h-3 w-3 mr-1" /> Unhide
               </>
