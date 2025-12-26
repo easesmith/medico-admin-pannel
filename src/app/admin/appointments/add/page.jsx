@@ -51,7 +51,8 @@ const bookingSchema = z.object({
   //   duration: z.coerce.number().min(1),
   servicePartnerId: z.string().optional(),
   notes: z.string().optional(),
-  category: z.enum(["nursing", "consultation", "therapy", "other"]),
+  category: z.string().min(1, "Required"),
+  // category: z.enum(["nursing", "consultation", "therapy", "other"]),
   modes: z.string(),
   addressId: z
     .string({

@@ -120,25 +120,25 @@ export const personalContactSchema = z.object({
 
 export const addressSchema = z.object({
   currentAddress: z.object({
-    street: z.string(),
-    locality: z.string(),
-    city: z.string(),
-    state: z.string(),
+    street: z.string().min(1, "Required"),
+    locality: z.string().min(1, "Required"),
+    city: z.string().min(1, "Required"),
+    state: z.string().min(1, "Required"),
     country: z.string().default("India"),
     pincode: z.string().regex(/^[0-9]{6}$/, "Pincode must be 6 digits"),
-    landmark: z.string().optional(),
+    landmark: z.string().min(1, "Required"),
   }),
   permanentAddress: z.object({
-    street: z.string(),
-    locality: z.string(),
-    city: z.string(),
-    state: z.string(),
+    street: z.string().min(1, "Required"),
+    locality: z.string().min(1, "Required"),
+    city: z.string().min(1, "Required"),
+    state: z.string().min(1, "Required"),
     country: z.string().default("India"),
     pincode: z
       .string()
       .regex(/^[0-9]{6}$/, "Pincode must be 6 digits")
       .optional(),
-    landmark: z.string().optional(),
+    landmark: z.string().min(1, "Required"),
     sameAsCurrent: z.boolean().optional(),
   }),
   workAddress: z.object({
